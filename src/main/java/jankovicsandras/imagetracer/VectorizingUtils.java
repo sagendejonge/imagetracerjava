@@ -14,7 +14,7 @@ public class VectorizingUtils {
     /**
      * 1. Color quantization repeated "cycles" times, based on K-means
      * clustering
-     *
+     * <p>
      * https://en.wikipedia.org/wiki/Color_quantization
      * https://en.wikipedia.org/wiki/K-means_clustering
      *
@@ -64,18 +64,18 @@ public class VectorizingUtils {
                         palette[k][2] = (byte) (-128 + (paletteacc[k][2] / paletteacc[k][4]));
                         palette[k][3] = (byte) (-128 + (paletteacc[k][3] / paletteacc[k][4]));
                     }
-                    //ratio = (float)( (double)(paletteacc[k][4]) / (double)(imgd.width*imgd.height) );
 
-					/*// Randomizing a color, if there are too few pixels and there will be a new cycle
-					if( (ratio<minratio) && (cnt<(cycles-1)) ){
-						palette[k][0] = (byte) (-128+Math.floor(Math.random()*255));
-						palette[k][1] = (byte) (-128+Math.floor(Math.random()*255));
-						palette[k][2] = (byte) (-128+Math.floor(Math.random()*255));
-						palette[k][3] = (byte) (-128+Math.floor(Math.random()*255));
-					}*/
+                    double ratio = (double) (paletteacc[k][4]) / (double) (imgd.width * imgd.height);
 
-                }// End of palette loop
-            }// End of Average colors from the second iteration
+                    // Randomizing a color, if there are too few pixels and there will be a new cycle
+                    if ((ratio < options.minColorRatio()) && (cnt < (options.colorQuantCycles() - 1))) {
+                        palette[k][0] = (byte) (-128 + Math.floor(Math.random() * 255));
+                        palette[k][1] = (byte) (-128 + Math.floor(Math.random() * 255));
+                        palette[k][2] = (byte) (-128 + Math.floor(Math.random() * 255));
+                        palette[k][3] = (byte) (-128 + Math.floor(Math.random() * 255));
+                    }
+                }
+            }
 
             // Reseting palette accumulator for averaging
             for (int i = 0; i < palette.length; i++) {

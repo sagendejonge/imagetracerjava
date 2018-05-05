@@ -22,7 +22,7 @@ public class Options {
     @Parameter(names = "-pathomit", description = "Edge node paths shorter than this will be discarded for noise reduction")
     private int pathOmit = 8;
 
-    @Parameter(names = "-old-quantizer", description = "Enable or disable old quantizer algorithm based on K-means", arity = 1)
+    @Parameter(names = "-oldquantizer", description = "Enable or disable old quantizer algorithm based on K-means", arity = 1)
     private boolean oldQuantizer = false;
 
     @Parameter(names = "-colorsampling", description = "Enable or disable color sampling", arity = 1)
