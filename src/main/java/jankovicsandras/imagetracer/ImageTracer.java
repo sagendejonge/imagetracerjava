@@ -41,7 +41,8 @@ public class ImageTracer {
         }
         imageData = new ImageData(width, height, data);
 
-        palette = Utils.getPalette(options, image, imageData, true);
+        palette = Utils.getPalette(options, image, imageData,
+                options.isOldQuantizer());
     }
 
     /**

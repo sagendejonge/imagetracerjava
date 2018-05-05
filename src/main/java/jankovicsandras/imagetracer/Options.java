@@ -22,6 +22,9 @@ public class Options {
     @Parameter(names = "-pathomit", description = "Edge node paths shorter than this will be discarded for noise reduction")
     private int pathOmit = 8;
 
+    @Parameter(names = "-old-quantizer", description = "Enable or disable old quantizer algorithm based on K-means", arity = 1)
+    private boolean oldQuantizer = false;
+
     @Parameter(names = "-colorsampling", description = "Enable or disable color sampling", arity = 1)
     private boolean colorSampling = true;
 
@@ -96,6 +99,14 @@ public class Options {
 
     public void setPathOmit(int pathOmit) {
         this.pathOmit = pathOmit;
+    }
+
+    public boolean isOldQuantizer() {
+        return oldQuantizer;
+    }
+
+    public void setOldQuantizer(boolean oldQuantizer) {
+        this.oldQuantizer = oldQuantizer;
     }
 
     public boolean isColorSampling() {
