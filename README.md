@@ -38,12 +38,12 @@ Warning: if the outfilename parameter is not specified, then this will overwrite
 
 Basic usage:
 ```bash
-java -jar ImageTracer.jar smiley.png
+java -jar ImageTracer.jar src/test/images/smiley.png
 ```
 
 With options:
 ```bash
-java -jar ImageTracer.jar smiley.png outfilename output.svg ltres 1 qtres 1 pathomit 8 colorsampling 1 numberofcolors 16 mincolorratio 0.02 colorquantcycles 3 scale 1 simplifytolerance 0 roundcoords 1 lcpr 0 qcpr 0 desc 1 viewbox 0 blurradius 0 blurdelta 20
+java -jar ImageTracer.jar src/test/images/smiley.png outfilename output.svg ltres 1 qtres 1 pathomit 8 colorsampling 1 numberofcolors 16 mincolorratio 0.02 colorquantcycles 3 scale 1 simplifytolerance 0 roundcoords 1 lcpr 0 qcpr 0 desc 1 viewbox 0 blurradius 0 blurdelta 20
 ```
 
 ### Including in Java projects
@@ -105,7 +105,7 @@ ImageTracer.saveString(
 ```
 
 ### Deterministic output
-See [options for deterministic tracing](https://github.com/jankovicsandras/imagetracerjava/blob/master/deterministic.md)
+See [options for deterministic tracing](doc/deterministic.md)
 
 
 ### Main Functions
@@ -150,7 +150,7 @@ There are more functions for advanced users, read the source if you are interest
 |```qcpr```|```0f```|Quadratic spline control point radius, if this is greater than zero, small circles and lines will be drawn in the SVG. Do not use this for big/complex images.|
 
 ### Process overview
-See [Process overview and Ideas for improvement](https://github.com/jankovicsandras/imagetracerjava/blob/master/process_overview.md)
+See [Process overview and Ideas for improvement](doc/process_overview.md)
 
 ### License
 #### The Unlicense / PUBLIC DOMAIN
