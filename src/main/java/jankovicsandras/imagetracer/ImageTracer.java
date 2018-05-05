@@ -51,9 +51,7 @@ public class ImageTracer {
         return loadImageData(image);
     }
 
-
     public ImageData loadImageData(BufferedImage image) throws Exception {
-
         int width = image.getWidth();
         int height = image.getHeight();
         rawData = image.getRGB(0, 0, width, height, null, 0, width);

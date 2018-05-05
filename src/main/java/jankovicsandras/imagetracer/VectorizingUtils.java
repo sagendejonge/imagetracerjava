@@ -12,22 +12,27 @@ import java.util.List;
 public class VectorizingUtils {
 
     /**
-     * 1. Color quantization repeated "cycles" times, based on K-means clustering
-     * https://en.wikipedia.org/wiki/Color_quantization    https://en.wikipedia.org/wiki/K-means_clustering
+     * 1. Color quantization repeated "cycles" times, based on K-means
+     * clustering
+     *
+     * https://en.wikipedia.org/wiki/Color_quantization
+     * https://en.wikipedia.org/wiki/K-means_clustering
      *
      * @param imgd
      * @param palette
      * @param options
      * @return
      */
-    public static IndexedImage colorquantization(ImageData imgd, byte[][] palette, Options options) {
+    public static IndexedImage colorquantization(ImageData imgd,
+            byte[][] palette, Options options) {
 
         // Selective Gaussian blur preprocessing
         if (options.blurRadius() > 0) {
             imgd = SelectiveBlur.blur(imgd, options.blurRadius(), options.blurDelta());
         }
 
-        // Creating indexed color array arr which has a boundary filled with -1 in every direction
+        // Creating indexed color array arr which has a boundary filled with
+        // -1 in every direction
         int[][] arr = new int[imgd.height + 2][imgd.width + 2];
         for (int j = 0; j < (imgd.height + 2); j++) {
             arr[j][0] = -1;
