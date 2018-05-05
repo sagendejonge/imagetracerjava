@@ -19,10 +19,10 @@ public class Options {
     @Parameter(names = "-qtres", description = "Error threshold for quadratic splines")
     private double qtres = 1;
 
-    @Parameter(names = "-pathOmit", description = "Edge node paths shorter than this will be discarded for noise reduction")
+    @Parameter(names = "-pathomit", description = "Edge node paths shorter than this will be discarded for noise reduction")
     private int pathOmit = 8;
 
-    @Parameter(names = "-colorsampling", description = "Enable or disable color sampling")
+    @Parameter(names = "-colorsampling", description = "Enable or disable color sampling", arity = 1)
     private boolean colorSampling = true;
 
     @Parameter(names = "-numberofcolors", description = "Number of colors to use on palette if pal object is not defined")
@@ -46,10 +46,10 @@ public class Options {
     @Parameter(names = "-roundcoords", description = "Rounding coordinates to a given decimal place. 1f means rounded to 1 decimal place like 7.3 ; 3f means rounded to 3 places, like 7.356")
     private int roundCoords = 1;
 
-    @Parameter(names = "-viewbox", description = "Enable or disable SVG viewBox")
+    @Parameter(names = "-viewbox", description = "Enable or disable SVG viewBox", arity = 1)
     private boolean viewBox = false;
 
-    @Parameter(names = "-desc", description = "Enable or disable SVG descriptions")
+    @Parameter(names = "-desc", description = "Enable or disable SVG descriptions", arity = 1)
     private boolean desc = true;
 
     @Parameter(names = "-lcpr", description = "Straight line control point radius, if this is greater than zero, small circles will be drawn in the SVG. Do not use this for big/complex images")

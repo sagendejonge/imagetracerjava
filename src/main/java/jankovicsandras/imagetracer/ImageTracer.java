@@ -187,6 +187,7 @@ public class ImageTracer {
         try {
             commander.parse(args);
         } catch (Exception e) {
+            System.out.print("Parse Error: " + e.getLocalizedMessage() + "\n\n");
             commander.usage();
             return;
         }
