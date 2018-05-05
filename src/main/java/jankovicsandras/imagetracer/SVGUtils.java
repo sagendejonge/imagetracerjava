@@ -1,11 +1,11 @@
 package jankovicsandras.imagetracer;
 
+import jankovicsandras.imagetracer.ImageTracer.IndexedImage;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.TreeMap;
 import java.util.Map.Entry;
-
-import jankovicsandras.imagetracer.ImageTracer.IndexedImage;
+import java.util.TreeMap;
 
 public class SVGUtils {
 	
@@ -80,7 +80,7 @@ public class SVGUtils {
 		int w = (int) (ii.width * options.get("scale")), h = (int) (ii.height * options.get("scale"));
 		String viewboxorviewport = options.get("viewbox")!=0 ? "viewBox=\"0 0 "+w+" "+h+"\" " : "width=\""+w+"\" height=\""+h+"\" ";
 		StringBuilder svgstr = new StringBuilder("<svg "+viewboxorviewport+"version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-		if(options.get("desc")!=0){ svgstr.append("desc=\"Created with ImageTracer.java version "+ImageTracer.versionnumber+"\" "); }
+		if(options.get("desc")!=0){ svgstr.append("desc=\"Created with ImageTracer.java version "+ImageTracer.VersionNumber +"\" "); }
 		svgstr.append(">");
 
 		// creating Z-index
