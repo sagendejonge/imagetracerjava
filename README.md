@@ -43,7 +43,7 @@ java -jar ImageTracer.jar src/test/images/smiley.png
 
 With options:
 ```bash
-java -jar ImageTracer.jar src/test/images/smiley.png outfilename output.svg ltres 1 qtres 1 pathomit 8 colorsampling 1 numberofcolors 16 mincolorratio 0.02 colorquantcycles 3 scale 1 simplifytolerance 0 roundcoords 1 lcpr 0 qcpr 0 desc 1 viewbox 0 blurradius 0 blurdelta 20
+java -jar ImageTracer.jar src/test/images/smiley.png outfilename output.svg ltres 1 qtres 1 pathOmit 8 colorsampling 1 numberofcolors 16 mincolorratio 0.02 colorquantcycles 3 scale 1 simplifytolerance 0 roundcoords 1 lcpr 0 qcpr 0 desc 1 viewbox 0 blurradius 0 blurdelta 20
 ```
 
 ### Including in Java projects
@@ -67,7 +67,7 @@ HashMap<String,Float> options = new HashMap<String,Float>();
 // Tracing
 options.put("ltres",1f);
 options.put("qtres",1f);
-options.put("pathomit",8f);
+options.put("pathOmit",8f);
 
 // Color quantization
 options.put("colorsampling",1f); // 1f means true ; 0f means false: starting with generated palette
@@ -135,7 +135,7 @@ There are more functions for advanced users, read the source if you are interest
 |-----------|-------------|-------|
 |```ltres```|```1f```|Error treshold for straight lines.|
 |```qtres```|```1f```|Error treshold for quadratic splines.|
-|```pathomit```|```8f```|Edge node paths shorter than this will be discarded for noise reduction.|
+|```pathOmit```|```8f```|Edge node paths shorter than this will be discarded for noise reduction.|
 |```colorsampling```|```1f```|Enable or disable color sampling. 1f is on, 0f is off.|
 |```numberofcolors```|```16f```|Number of colors to use on palette if pal object is not defined.|
 |```mincolorratio```|```0.02f```|Color quantization will randomize a color if fewer pixels than (total pixels*mincolorratio) has it.|
