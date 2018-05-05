@@ -146,13 +146,14 @@ public class SVGUtils {
      * Converting tracedata to an SVG string, paths are drawn according to a Z-index
      * the optional lcpr and qcpr are linear and quadratic control point radiuses
      *
-     * @param ii
+     * @param indexedImage
      * @param options
      * @return
      */
-    public static String getSvgString(IndexedImage ii, Options options) {
+    public static String getSvgString(IndexedImage indexedImage,
+            Options options) {
         // SVG start
-        int w = (int) (ii.width * options.scale()), h = (int) (ii.height * options.scale());
+        int w = (int) (indexedImage.width * options.scale()), h = (int) (indexedImage.height * options.scale());
         String viewboxorviewport = options.isViewBox() ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
         StringBuilder svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
         if (options.isDesc()) {
@@ -164,13 +165,13 @@ public class SVGUtils {
         TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
         double label;
         // Layer loop
-        for (int k = 0; k < ii.layers.size(); k++) {
+        for (int k = 0; k < indexedImage.traceData.size(); k++) {
 
             // Path loop
-            for (int pcnt = 0; pcnt < ii.layers.get(k).size(); pcnt++) {
+            for (int pcnt = 0; pcnt < indexedImage.traceData.get(k).size(); pcnt++) {
 
                 // Label (Z-index key) is the startpoint of the path, linearized
-                label = (ii.layers.get(k).get(pcnt).get(0)[2] * w) + ii.layers.get(k).get(pcnt).get(0)[1];
+                label = (indexedImage.traceData.get(k).get(pcnt).get(0)[2] * w) + indexedImage.traceData.get(k).get(pcnt).get(0)[1];
                 // Creating new list if required
                 if (!zindex.containsKey(label)) {
                     zindex.put(label, new Integer[2]);
@@ -193,8 +194,8 @@ public class SVGUtils {
                 thisdesc = "";
             }
             svgPathString(svgstr, thisdesc,
-                    ii.layers.get(entry.getValue()[0]).get(entry.getValue()[1]),
-                    toSvgColorStr(ii.palette[entry.getValue()[0]]),
+                    indexedImage.traceData.get(entry.getValue()[0]).get(entry.getValue()[1]),
+                    toSvgColorStr(indexedImage.palette[entry.getValue()[0]]),
                     options);
         }
 
