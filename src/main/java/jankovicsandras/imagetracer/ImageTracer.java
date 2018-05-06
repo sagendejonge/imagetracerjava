@@ -118,7 +118,7 @@ public class ImageTracer {
         public int[][] array;
         // array[palettelength][4] RGBA color palette
         public byte[][] palette;
-        public List<List<List<Double[]>>> traceData;
+        public List<List<List<Segment>>> traceData;
 
         public IndexedImage(int[][] array, byte[][] palette) {
             this.array = array;

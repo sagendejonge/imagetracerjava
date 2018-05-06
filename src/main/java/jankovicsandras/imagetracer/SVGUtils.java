@@ -2,10 +2,13 @@ package jankovicsandras.imagetracer;
 
 import jankovicsandras.imagetracer.ImageTracer.IndexedImage;
 
+import java.awt.*;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.QuadCurve2D;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 public class SVGUtils {
 
@@ -19,61 +22,46 @@ public class SVGUtils {
      * @param options
      */
     public static void svgPathString(StringBuilder builder, String desc,
-            List<Double[]> segments, String colorStr, final Options options) {
+            List<Segment> segments, String colorStr, final Options options) {
 
-        segments = segments.stream().map(segment -> {
-            Double scaled[] = new Double[segment.length];
-            for (int i = 0; i < segment.length; i++) {
-                scaled[i] = segment[i] * options.scale();
-            }
-            return scaled;
-        }).collect(Collectors.toList());
+        segments.forEach(segment -> segment.scale(options.scale()));
 
-        // Path
-        builder.append("<path ")
-                .append(desc)
-                .append(colorStr)
-                .append("d=\"")
-                .append("M ")
-                .append(segments.get(0)[1])
-                .append(" ")
-                .append(segments.get(0)[2])
-                .append(" ");
-
-        if (options.roundCoords() == -1) {
-            for (int i = 0; i < segments.size(); i++) {
-                if (segments.get(i)[0] == 1.0) {
-                    builder.append("L ")
-                            .append(segments.get(i)[3])
+        boolean start = true;
+        for (Segment segment : segments) {
+            if (start) {
+                Point2D startPoint = segment.start();
+                if (startPoint != null) {
+                    // Start path and move to
+                    builder.append("<path ")
+                            .append(desc)
+                            .append(colorStr)
+                            .append("d=\"")
+                            .append("M ")
+                            .append(startPoint.getX())
                             .append(" ")
-                            .append(segments.get(i)[4])
+                            .append(startPoint.getY())
                             .append(" ");
-                } else {
-                    builder.append("Q ")
-                            .append(segments.get(i)[3])
-                            .append(" ").append(segments.get(i)[4])
-                            .append(" ").append(segments.get(i)[5])
-                            .append(" ").append(segments.get(i)[6])
-                            .append(" ");
+                    start = false;
                 }
-            }
-        } else {
-            for (int i = 0; i < segments.size(); i++) {
-                if (segments.get(i)[0] == 1.0) {
+            } else {
+                Shape shape = segment.shape();
+                if (shape instanceof Line2D) {
+                    Line2D line = (Line2D) shape;
                     builder.append("L ")
-                            .append(round(segments.get(i)[3], options.roundCoords()))
+                            .append(round(line.getX2(), options))
                             .append(" ")
-                            .append(round(segments.get(i)[4], options.roundCoords()))
+                            .append(round(line.getY2(), options))
                             .append(" ");
-                } else {
+                } else if (shape instanceof QuadCurve2D) {
+                    QuadCurve2D conic = (QuadCurve2D) shape;
                     builder.append("Q ")
-                            .append(round(segments.get(i)[3], options.roundCoords()))
+                            .append(round(conic.getCtrlX(), options))
                             .append(" ")
-                            .append(round(segments.get(i)[4], options.roundCoords()))
+                            .append(round(conic.getCtrlY(), options))
                             .append(" ")
-                            .append(round(segments.get(i)[5], options.roundCoords()))
+                            .append(round(conic.getX2(), options))
                             .append(" ")
-                            .append(round(segments.get(i)[6], options.roundCoords()))
+                            .append(round(conic.getY2(), options))
                             .append(" ");
                 }
             }
@@ -81,65 +69,65 @@ public class SVGUtils {
 
         builder.append("Z\" />");
 
-        // Rendering control points
-        for (int i = 0; i < segments.size(); i++) {
-            if ((options.lcpr() > 0) && (segments.get(i)[0] == 1.0)) {
-                builder.append("<circle cx=\"")
-                        .append(segments.get(i)[3])
-                        .append("\" cy=\"")
-                        .append(segments.get(i)[4])
-                        .append("\" r=\"")
-                        .append(options.lcpr())
-                        .append("\" fill=\"white\" stroke-width=\"")
-                        .append(options.lcpr() * 0.2)
-                        .append("\" stroke=\"black\" />");
-            }
-            if (options.qcpr() > 0 && segments.get(i)[0] == 2.0) {
-                builder.append("<circle cx=\"")
-                        .append(segments.get(i)[3])
-                        .append("\" cy=\"")
-                        .append(segments.get(i)[4])
-                        .append("\" r=\"")
-                        .append(options.qcpr())
-                        .append("\" fill=\"cyan\" stroke-width=\"")
-                        .append(options.qcpr() * 0.2)
-                        .append("\" stroke=\"black\" />");
-
-                builder.append("<circle cx=\"")
-                        .append(segments.get(i)[5])
-                        .append("\" cy=\"")
-                        .append(segments.get(i)[6])
-                        .append("\" r=\"")
-                        .append(options.qcpr())
-                        .append("\" fill=\"white\" stroke-width=\"")
-                        .append(options.qcpr() * 0.2)
-                        .append("\" stroke=\"black\" />");
-
-                builder.append("<line x1=\"")
-                        .append(segments.get(i)[1])
-                        .append("\" y1=\"")
-                        .append(segments.get(i)[2])
-                        .append("\" x2=\"")
-                        .append(segments.get(i)[3])
-                        .append("\" y2=\"")
-                        .append(segments.get(i)[4])
-                        .append("\" stroke-width=\"")
-                        .append(options.qcpr() * 0.2)
-                        .append("\" stroke=\"cyan\" />");
-
-                builder.append("<line x1=\"")
-                        .append(segments.get(i)[3])
-                        .append("\" y1=\"")
-                        .append(segments.get(i)[4])
-                        .append("\" x2=\"")
-                        .append(segments.get(i)[5])
-                        .append("\" y2=\"")
-                        .append(segments.get(i)[6])
-                        .append("\" stroke-width=\"")
-                        .append(options.qcpr() * 0.2)
-                        .append("\" stroke=\"cyan\" />");
-            }
-        }
+//        // Rendering control points
+//        for (int i = 0; i < segments.size(); i++) {
+//            if ((options.lcpr() > 0) && (segments.get(i)[0] == 1.0)) {
+//                builder.append("<circle cx=\"")
+//                        .append(segments.get(i)[3])
+//                        .append("\" cy=\"")
+//                        .append(segments.get(i)[4])
+//                        .append("\" r=\"")
+//                        .append(options.lcpr())
+//                        .append("\" fill=\"white\" stroke-width=\"")
+//                        .append(options.lcpr() * 0.2)
+//                        .append("\" stroke=\"black\" />");
+//            }
+//            if (options.qcpr() > 0 && segments.get(i)[0] == 2.0) {
+//                builder.append("<circle cx=\"")
+//                        .append(segments.get(i)[3])
+//                        .append("\" cy=\"")
+//                        .append(segments.get(i)[4])
+//                        .append("\" r=\"")
+//                        .append(options.qcpr())
+//                        .append("\" fill=\"cyan\" stroke-width=\"")
+//                        .append(options.qcpr() * 0.2)
+//                        .append("\" stroke=\"black\" />");
+//
+//                builder.append("<circle cx=\"")
+//                        .append(segments.get(i)[5])
+//                        .append("\" cy=\"")
+//                        .append(segments.get(i)[6])
+//                        .append("\" r=\"")
+//                        .append(options.qcpr())
+//                        .append("\" fill=\"white\" stroke-width=\"")
+//                        .append(options.qcpr() * 0.2)
+//                        .append("\" stroke=\"black\" />");
+//
+//                builder.append("<line x1=\"")
+//                        .append(segments.get(i)[1])
+//                        .append("\" y1=\"")
+//                        .append(segments.get(i)[2])
+//                        .append("\" x2=\"")
+//                        .append(segments.get(i)[3])
+//                        .append("\" y2=\"")
+//                        .append(segments.get(i)[4])
+//                        .append("\" stroke-width=\"")
+//                        .append(options.qcpr() * 0.2)
+//                        .append("\" stroke=\"cyan\" />");
+//
+//                builder.append("<line x1=\"")
+//                        .append(segments.get(i)[3])
+//                        .append("\" y1=\"")
+//                        .append(segments.get(i)[4])
+//                        .append("\" x2=\"")
+//                        .append(segments.get(i)[5])
+//                        .append("\" y2=\"")
+//                        .append(segments.get(i)[6])
+//                        .append("\" stroke-width=\"")
+//                        .append(options.qcpr() * 0.2)
+//                        .append("\" stroke=\"cyan\" />");
+//            }
+//        }
     }
 
     /**
@@ -162,16 +150,21 @@ public class SVGUtils {
         svgstr.append(">");
 
         // creating Z-index
-        TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
+        TreeMap<Double, Integer[]> zindex = new TreeMap<>();
         double label;
         // Layer loop
         for (int k = 0; k < indexedImage.traceData.size(); k++) {
 
             // Path loop
             for (int pcnt = 0; pcnt < indexedImage.traceData.get(k).size(); pcnt++) {
+                Segment segment = indexedImage.traceData.get(k).get(pcnt).get(0);
+                Point2D start = segment.start();
+                if (start == null) {
+                    continue;
+                }
 
                 // Label (Z-index key) is the startpoint of the path, linearized
-                label = (indexedImage.traceData.get(k).get(pcnt).get(0)[2] * w) + indexedImage.traceData.get(k).get(pcnt).get(0)[1];
+                label = (start.getY() * w) + start.getX();
                 // Creating new list if required
                 if (!zindex.containsKey(label)) {
                     zindex.put(label, new Integer[2]);
@@ -205,11 +198,19 @@ public class SVGUtils {
         return svgstr.toString();
     }
 
-    public static double round(double value, int places) {
-        return Math.round(value * Math.pow(10, places)) / Math.pow(10, places);
+    public static double round(double value, Options options) {
+        if (options.roundCoords() == -1) {
+            return value;
+        }
+        return Math.round(value * Math.pow(10, options.roundCoords()))
+                / Math.pow(10, options.roundCoords());
     }
 
     static String toSvgColorStr(byte[] c) {
-        return "fill=\"rgb(" + (c[0] + 128) + "," + (c[1] + 128) + "," + (c[2] + 128) + ")\" stroke=\"rgb(" + (c[0] + 128) + "," + (c[1] + 128) + "," + (c[2] + 128) + ")\" stroke-width=\"1\" opacity=\"" + ((c[3] + 128) / 255.0) + "\" ";
+        return String.format("fill=\"rgb(%s,%s,%s)\" stroke=\"rgb(%s,%s,%s)\" " +
+                        "stroke-width=\"1\" opacity=\"%s\" ",
+                c[0] + 128, c[1] + 128, c[2] + 128,
+                c[0] + 128, c[1] + 128, c[2] + 128,
+                (c[3] + 128) / 255.0);
     }
 }

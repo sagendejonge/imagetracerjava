@@ -44,7 +44,7 @@ public class VectorizingUtils {
             arr[imgd.height + 1][i] = -1;
         }
 
-        int idx = 0, cd, cdl, ci, c1, c2, c3, c4;
+        int idx, cd, cdl, ci, c1, c2, c3, c4;
 
 
         byte[][] original_palette_backup = palette;
@@ -183,7 +183,7 @@ public class VectorizingUtils {
                 n7 = ii.array[j + 1][i] == val ? 1 : 0;
                 n8 = ii.array[j + 1][i + 1] == val ? 1 : 0;
 
-                // this pixel"s type and looking back on previous pixels
+                // this pixel's type and looking back on previous pixels
                 layers[val][j + 1][i + 1] = 1 + (n5 * 2) + (n8 * 4) + (n7 * 8);
                 if (n4 == 0) {
                     layers[val][j + 1][i] = 0 + 2 + (n7 * 4) + (n6 * 8);
@@ -442,11 +442,11 @@ public class VectorizingUtils {
      * @param qtreshold
      * @return
      */
-    public static List<Double[]> tracepath(List<Double[]> path,
+    public static List<Segment> tracepath(List<Double[]> path,
             double ltreshold, double qtreshold) {
         int pcnt = 0, seqend = 0;
         double segtype1, segtype2;
-        List<Double[]> smp = new ArrayList<>();
+        List<Segment> smp = new ArrayList<>();
         //Double [] thissegment;
         int pathlength = path.size();
 
@@ -471,7 +471,7 @@ public class VectorizingUtils {
 
             // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6.
             // to startpoint-splitpoint and splitpoint-endpoint sequences
-            smp.addAll(fitseq(path, ltreshold, qtreshold, pcnt, seqend));
+            smp.addAll(fitSequence(path, ltreshold, qtreshold, pcnt, seqend));
             // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new
             // points from the next sequence
 
@@ -497,15 +497,15 @@ public class VectorizingUtils {
      * @param seqend
      * @return
      */
-    public static List<Double[]> fitseq(List<Double[]> path,
+    public static List<Segment> fitSequence(List<Double[]> path,
             double ltreshold, double qtreshold, int seqstart, int seqend) {
-        List<Double[]> segment = new ArrayList<>();
+        List<Segment> segments = new ArrayList<>();
         Double[] thissegment;
         int pathlength = path.size();
 
         // return if invalid seqend
         if ((seqend > pathlength) || (seqend < 0)) {
-            return segment;
+            return segments;
         }
 
         int errorpoint = seqstart;
@@ -542,16 +542,11 @@ public class VectorizingUtils {
 
         // return straight line if fits
         if (curvepass) {
-            segment.add(new Double[7]);
-            thissegment = segment.get(segment.size() - 1);
-            thissegment[0] = 1.0;
-            thissegment[1] = path.get(seqstart)[0];
-            thissegment[2] = path.get(seqstart)[1];
-            thissegment[3] = path.get(seqend)[0];
-            thissegment[4] = path.get(seqend)[1];
-            thissegment[5] = 0.0;
-            thissegment[6] = 0.0;
-            return segment;
+            segments.add(Segment.line(
+                    path.get(seqstart)[0], path.get(seqstart)[1],
+                    path.get(seqend)[0], path.get(seqend)[1],
+                    0));
+            return segments;
         }
 
         // 5.3. If the straight line fails (an error>ltreshold), find the point
@@ -599,16 +594,12 @@ public class VectorizingUtils {
 
         // return spline if fits
         if (curvepass) {
-            segment.add(new Double[7]);
-            thissegment = segment.get(segment.size() - 1);
-            thissegment[0] = 2.0;
-            thissegment[1] = path.get(seqstart)[0];
-            thissegment[2] = path.get(seqstart)[1];
-            thissegment[3] = cpx;
-            thissegment[4] = cpy;
-            thissegment[5] = path.get(seqend)[0];
-            thissegment[6] = path.get(seqend)[1];
-            return segment;
+            segments.add(Segment.conic(
+                    path.get(seqstart)[0], path.get(seqstart)[1],
+                    cpx, cpy, path.get(seqend)[0],
+                    path.get(seqend)[1],
+                    0));
+            return segments;
         }
 
         // 5.5. If the spline fails (an error>qtreshold), find the point with
@@ -617,9 +608,9 @@ public class VectorizingUtils {
 
         // 5.6. Split sequence and recursively apply 5.2. - 5.6. to
         // startpoint-splitpoint and splitpoint-endpoint sequences
-        segment = fitseq(path, ltreshold, qtreshold, seqstart, splitpoint);
-        segment.addAll(fitseq(path, ltreshold, qtreshold, splitpoint, seqend));
-        return segment;
+        segments = fitSequence(path, ltreshold, qtreshold, seqstart, splitpoint);
+        segments.addAll(fitSequence(path, ltreshold, qtreshold, splitpoint, seqend));
+        return segments;
     }
 
     /**
@@ -630,10 +621,10 @@ public class VectorizingUtils {
      * @param qtres
      * @return
      */
-    public static List<List<Double[]>> batchtracepaths(
+    public static List<List<Segment>> batchtracepaths(
             List<List<Double[]>> internodepaths, double ltres,
             double qtres) {
-        List<List<Double[]>> btracedpaths = new ArrayList<>();
+        List<List<Segment>> btracedpaths = new ArrayList<>();
         for (int k = 0; k < internodepaths.size(); k++) {
             btracedpaths.add(tracepath(internodepaths.get(k), ltres, qtres));
         }
@@ -648,10 +639,10 @@ public class VectorizingUtils {
      * @param qtres
      * @return
      */
-    public static List<List<List<Double[]>>> batchtracelayers(
+    public static List<List<List<Segment>>> batchtracelayers(
             List<List<List<Double[]>>> binternodes, double ltres,
             double qtres) {
-        List<List<List<Double[]>>> btbis = new ArrayList<>();
+        List<List<List<Segment>>> btbis = new ArrayList<>();
         for (int k = 0; k < binternodes.size(); k++) {
             btbis.add(batchtracepaths(binternodes.get(k), ltres, qtres));
         }

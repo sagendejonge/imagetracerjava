@@ -26,17 +26,16 @@ public class Utils {
         }
     }
 
-    public static byte[][] getPalette(Options options, BufferedImage image, ImageData imageData,
-            boolean old) {
+    public static byte[][] getPalette(Options options, BufferedImage image,
+            ImageData imageData, boolean old) {
         byte[][] bytePalette;
         if (old) {
-//            if(palette==null){
             if (options.isColorSampling()) {
-                bytePalette = Quantize2.samplePalette(options.numberOfColors(), imageData);
+                bytePalette = Quantize2.samplePalette(options.numberOfColors(),
+                        imageData);
             } else {
                 bytePalette = Quantize2.generatePalette(options.numberOfColors());
             }
-//            }
         } else {
             int[][] pixels = new int[image.getWidth()][image.getHeight()];
 
