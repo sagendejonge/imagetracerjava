@@ -28,7 +28,8 @@ public class VectorizingUtils {
 
         // Selective Gaussian blur preprocessing
         if (options.blurRadius() > 0) {
-            imgd = SelectiveBlur.blur(imgd, options.blurRadius(), options.blurDelta());
+            imgd = SelectiveBlur.blur(imgd, options.blurRadius(),
+                    options.blurDelta());
         }
 
         // Creating indexed color array arr which has a boundary filled with
@@ -59,20 +60,33 @@ public class VectorizingUtils {
                 for (int k = 0; k < palette.length; k++) {
                     // averaging
                     if (paletteacc[k][3] > 0) {
-                        palette[k][0] = (byte) (-128 + (paletteacc[k][0] / paletteacc[k][4]));
-                        palette[k][1] = (byte) (-128 + (paletteacc[k][1] / paletteacc[k][4]));
-                        palette[k][2] = (byte) (-128 + (paletteacc[k][2] / paletteacc[k][4]));
-                        palette[k][3] = (byte) (-128 + (paletteacc[k][3] / paletteacc[k][4]));
+                        palette[k][0] = (byte) (-128 + (paletteacc[k][0]
+                                / paletteacc[k][4]));
+                        palette[k][1] = (byte) (-128 + (paletteacc[k][1]
+                                / paletteacc[k][4]));
+                        palette[k][2] = (byte) (-128 + (paletteacc[k][2]
+                                / paletteacc[k][4]));
+                        palette[k][3] = (byte) (-128 + (paletteacc[k][3]
+                                / paletteacc[k][4]));
                     }
 
-                    double ratio = (double) (paletteacc[k][4]) / (double) (imgd.width * imgd.height);
+                    if (options.isOldQuantizer()) {
+                        double ratio = (double) (paletteacc[k][4])
+                                / (double) (imgd.width * imgd.height);
 
-                    // Randomizing a color, if there are too few pixels and there will be a new cycle
-                    if ((ratio < options.minColorRatio()) && (cnt < (options.colorQuantCycles() - 1))) {
-                        palette[k][0] = (byte) (-128 + Math.floor(Math.random() * 255));
-                        palette[k][1] = (byte) (-128 + Math.floor(Math.random() * 255));
-                        palette[k][2] = (byte) (-128 + Math.floor(Math.random() * 255));
-                        palette[k][3] = (byte) (-128 + Math.floor(Math.random() * 255));
+                        // Randomizing a color, if there are too few pixels
+                        // and there will be a new cycle
+                        if ((ratio < options.minColorRatio())
+                                && (cnt < (options.colorQuantCycles() - 1))) {
+                            palette[k][0] = (byte) (-128 + Math.floor(
+                                    Math.random() * 255));
+                            palette[k][1] = (byte) (-128 + Math.floor(
+                                    Math.random() * 255));
+                            palette[k][2] = (byte) (-128 + Math.floor(
+                                    Math.random() * 255));
+                            palette[k][3] = (byte) (-128 + Math.floor(
+                                    Math.random() * 255));
+                        }
                     }
                 }
             }
@@ -92,18 +106,25 @@ public class VectorizingUtils {
 
                     idx = ((j * imgd.width) + i) * 4;
 
-                    // find closest color from original_palette_backup by measuring (rectilinear)
-                    // color distance between this pixel and all palette colors
+                    // find closest color from original_palette_backup by
+                    // measuring (rectilinear) color distance between this
+                    // pixel and all palette colors
                     cdl = 256 + 256 + 256 + 256;
                     ci = 0;
                     for (int k = 0; k < original_palette_backup.length; k++) {
 
-                        // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                        c1 = Math.abs(original_palette_backup[k][0] - imgd.data[idx]);
-                        c2 = Math.abs(original_palette_backup[k][1] - imgd.data[idx + 1]);
-                        c3 = Math.abs(original_palette_backup[k][2] - imgd.data[idx + 2]);
-                        c4 = Math.abs(original_palette_backup[k][3] - imgd.data[idx + 3]);
-                        cd = c1 + c2 + c3 + (c4 * 4); // weighted alpha seems to help images with transparency
+                        // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance
+                        // works better than https://en.wikipedia.org/wiki/Euclidean_distance
+                        c1 = Math.abs(original_palette_backup[k][0]
+                                - imgd.data[idx]);
+                        c2 = Math.abs(original_palette_backup[k][1]
+                                - imgd.data[idx + 1]);
+                        c3 = Math.abs(original_palette_backup[k][2]
+                                - imgd.data[idx + 2]);
+                        c4 = Math.abs(original_palette_backup[k][3]
+                                - imgd.data[idx + 3]);
+                        // weighted alpha seems to help images with transparency
+                        cd = c1 + c2 + c3 + (c4 * 4);
 
                         // Remember this color if this is the closest yet
                         if (cd < cdl) {
@@ -111,7 +132,7 @@ public class VectorizingUtils {
                             ci = k;
                         }
 
-                    }// End of palette loop
+                    }
 
                     // add to palettacc
                     paletteacc[ci][0] += 128 + imgd.data[idx];
@@ -140,7 +161,8 @@ public class VectorizingUtils {
      */
     public static int[][][] layering(IndexedImage ii) {
         // Creating layers for each indexed color in arr
-        int val = 0, aw = ii.array[0].length, ah = ii.array.length, n1, n2, n3, n4, n5, n6, n7, n8;
+        int val = 0, aw = ii.array[0].length, ah = ii.array.length, n1, n2, n3,
+                n4, n5, n6, n7, n8;
 
         int[][][] layers = new int[ii.palette.length][ah][aw];
 
@@ -181,13 +203,17 @@ public class VectorizingUtils {
     /**
      * Lookup tables for pathscan
      */
-    static byte[] pathscan_dir_lookup = {0, 0, 3, 0, 1, 0, 3, 0, 0, 3, 3, 1, 0, 3, 0, 0};
-    static boolean[] pathscan_holepath_lookup = {false, false, false, false, false, false, false, true, false, false, false, true, false, true, true, false};
+    static byte[] pathscan_dir_lookup = {0, 0, 3, 0, 1, 0, 3, 0, 0, 3, 3, 1, 0,
+            3, 0, 0};
+    static boolean[] pathscan_holepath_lookup = {false, false, false, false,
+            false, false, false, true, false, false, false, true, false, true,
+            true, false};
     /**
      * pathscan_combined_lookup[ arr[py][px] ][ dir ] = [nextarrpypx, nextdir, deltapx, deltapy];
      */
     static byte[][][] pathscan_combined_lookup = {
-            {{-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}},// arr[py][px]==0 is invalid
+            // arr[py][px]==0 is invalid
+            {{-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}},
             {{0, 1, 0, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}, {0, 2, -1, 0}},
             {{-1, -1, -1, -1}, {-1, -1, -1, -1}, {0, 1, 0, -1}, {0, 0, 1, 0}},
             {{0, 0, 1, 0}, {-1, -1, -1, -1}, {0, 2, -1, 0}, {-1, -1, -1, -1}},
@@ -205,11 +231,14 @@ public class VectorizingUtils {
             {{0, 0, 1, 0}, {-1, -1, -1, -1}, {0, 2, -1, 0}, {-1, -1, -1, -1}},
             {{-1, -1, -1, -1}, {-1, -1, -1, -1}, {0, 1, 0, -1}, {0, 0, 1, 0}},
             {{0, 1, 0, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}, {0, 2, -1, 0}},
-            {{-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}}// arr[py][px]==15 is invalid
+            // arr[py][px]==15 is invalid
+            {{-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}, {-1, -1, -1, -1}}
     };
 
     /**
-     * 3. Walking through an edge node array, discarding edge node types 0 and 15 and creating paths from the rest.
+     * 3. Walking through an edge node array, discarding edge node types 0 and
+     * 15 and creating paths from the rest.
+     * <p>
      * Walk directions (dir): 0 > ; 1 ^ ; 2 < ; 3 v
      * Edge node types ( ▓:light or 1; ░:dark or 0 )
      * ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
@@ -238,7 +267,8 @@ public class VectorizingUtils {
                     thispath = paths.get(paths.size() - 1);
                     pathfinished = false;
 
-                    // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
+                    // fill paths will be drawn, but hole paths are also
+                    // required to remove unnecessary edge nodes
                     dir = pathscan_dir_lookup[arr[py][px]];
                     holepath = pathscan_holepath_lookup[arr[py][px]];
 
@@ -251,7 +281,9 @@ public class VectorizingUtils {
                         thispath.get(thispath.size() - 1)[1] = py - 1;
                         thispath.get(thispath.size() - 1)[2] = arr[py][px];
 
-                        // Next: look up the replacement, direction and coordinate changes = clear this cell, turn if required, walk forward
+                        // Next: look up the replacement, direction and
+                        // coordinate changes = clear this cell, turn if
+                        // required, walk forward
                         lookuprow = pathscan_combined_lookup[arr[py][px]][dir];
                         arr[py][px] = lookuprow[0];
                         dir = lookuprow[1];
@@ -259,9 +291,11 @@ public class VectorizingUtils {
                         py += lookuprow[3];
 
                         // Close path
-                        if (((px - 1) == thispath.get(0)[0]) && ((py - 1) == thispath.get(0)[1])) {
+                        if (((px - 1) == thispath.get(0)[0])
+                                && ((py - 1) == thispath.get(0)[1])) {
                             pathfinished = true;
-                            // Discarding 'hole' type paths and paths shorter than pathomit
+                            // Discarding 'hole' type paths and paths shorter
+                            // than pathomit
                             if ((holepath) || (thispath.size() < pathomit)) {
                                 paths.remove(thispath);
                             }
@@ -281,7 +315,8 @@ public class VectorizingUtils {
      * @param pathomit
      * @return
      */
-    public static List<List<List<Integer[]>>> batchpathscan(int[][][] layers, float pathomit) {
+    public static List<List<List<Integer[]>>> batchpathscan(int[][][] layers,
+            float pathomit) {
         List<List<List<Integer[]>>> bpaths = new ArrayList<>();
         for (int[][] layer : layers) {
             bpaths.add(pathscan(layer, pathomit));
@@ -367,7 +402,8 @@ public class VectorizingUtils {
      * @param bpaths
      * @return
      */
-    static List<List<List<Double[]>>> batchinternodes(List<List<List<Integer[]>>> bpaths) {
+    static List<List<List<Double[]>>> batchinternodes(
+            List<List<List<Integer[]>>> bpaths) {
         List<List<List<Double[]>>> binternodes = new ArrayList<>();
         for (int k = 0; k < bpaths.size(); k++) {
             binternodes.add(internodes(bpaths.get(k)));
@@ -377,15 +413,21 @@ public class VectorizingUtils {
 
 
     /**
-     * 5. tracepath() : recursively trying to fit straight and quadratic spline segments on the 8 direction internode path
+     * 5. tracepath() : recursively trying to fit straight and quadratic spline
+     * segments on the 8 direction internode path
      * <p>
      * 5.1. Find sequences of points with only 2 segment types
      * 5.2. Fit a straight line on the sequence
-     * 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
-     * 5.4. Fit a quadratic spline through errorpoint (project this to get controlpoint), then measure errors on every point in the sequence
-     * 5.5. If the spline fails (an error>qtreshold), find the point with the biggest error, set splitpoint = (fitting point + errorpoint)/2
-     * 5.6. Split sequence and recursively apply 5.2. - 5.7. to startpoint-splitpoint and splitpoint-endpoint sequences
-     * 5.7. TODO? If splitpoint-endpoint is a spline, try to add new points from the next sequence
+     * 5.3. If the straight line fails (an error>ltreshold), find the point with
+     * the biggest error
+     * 5.4. Fit a quadratic spline through errorpoint (project this to get
+     * controlpoint), then measure errors on every point in the sequence
+     * 5.5. If the spline fails (an error>qtreshold), find the point with the
+     * biggest error, set splitpoint = (fitting point + errorpoint)/2
+     * 5.6. Split sequence and recursively apply 5.2. - 5.7. to
+     * startpoint-splitpoint and splitpoint-endpoint sequences
+     * 5.7. TODO: If splitpoint-endpoint is a spline, try to add new points
+     * from the next sequence
      * <p>
      * This returns an SVG Path segment as a double[7] where
      * segment[0] ==1.0 linear  ==2.0 quadratic interpolation
@@ -414,7 +456,9 @@ public class VectorizingUtils {
             segtype2 = -1;
             seqend = pcnt + 1;
             while (
-                    ((path.get(seqend)[2] == segtype1) || (path.get(seqend)[2] == segtype2) || (segtype2 == -1))
+                    ((path.get(seqend)[2] == segtype1)
+                            || (path.get(seqend)[2] == segtype2)
+                            || (segtype2 == -1))
                             && (seqend < (pathlength - 1))) {
                 if ((path.get(seqend)[2] != segtype1) && (segtype2 == -1)) {
                     segtype2 = path.get(seqend)[2];
@@ -425,9 +469,11 @@ public class VectorizingUtils {
                 seqend = 0;
             }
 
-            // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
+            // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6.
+            // to startpoint-splitpoint and splitpoint-endpoint sequences
             smp.addAll(fitseq(path, ltreshold, qtreshold, pcnt, seqend));
-            // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new points from the next sequence
+            // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new
+            // points from the next sequence
 
             // forward pcnt;
             if (seqend > 0) {
@@ -482,7 +528,8 @@ public class VectorizingUtils {
             }
             px = path.get(seqstart)[0] + (vx * pl);
             py = path.get(seqstart)[1] + (vy * pl);
-            dist2 = ((path.get(pcnt)[0] - px) * (path.get(pcnt)[0] - px)) + ((path.get(pcnt)[1] - py) * (path.get(pcnt)[1] - py));
+            dist2 = ((path.get(pcnt)[0] - px) * (path.get(pcnt)[0] - px))
+                    + ((path.get(pcnt)[1] - py) * (path.get(pcnt)[1] - py));
             if (dist2 > ltreshold) {
                 curvepass = false;
             }
@@ -507,16 +554,22 @@ public class VectorizingUtils {
             return segment;
         }
 
-        // 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
+        // 5.3. If the straight line fails (an error>ltreshold), find the point
+        // with the biggest error
         int fitpoint = errorpoint;
         curvepass = true;
         errorval = 0;
 
-        // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
+        // 5.4. Fit a quadratic spline through this point, measure errors on
+        // every point in the sequence
         // helpers and projecting to get control point
-        double t = (fitpoint - seqstart) / tl, t1 = (1.0 - t) * (1.0 - t), t2 = 2.0 * (1.0 - t) * t, t3 = t * t;
-        double cpx = (((t1 * path.get(seqstart)[0]) + (t3 * path.get(seqend)[0])) - path.get(fitpoint)[0]) / -t2,
-                cpy = (((t1 * path.get(seqstart)[1]) + (t3 * path.get(seqend)[1])) - path.get(fitpoint)[1]) / -t2;
+        double t = (fitpoint - seqstart) / tl, t1 = (1.0 - t) * (1.0 - t),
+                t2 = 2.0 * (1.0 - t) * t, t3 = t * t;
+        double cpx = (((t1 * path.get(seqstart)[0])
+                + (t3 * path.get(seqend)[0])) - path.get(fitpoint)[0]) / -t2,
+                cpy = (((t1 * path.get(seqstart)[1])
+                        + (t3 * path.get(seqend)[1])) - path.get(fitpoint)[1])
+                        / -t2;
 
         // Check every point
         pcnt = seqstart + 1;
@@ -526,10 +579,13 @@ public class VectorizingUtils {
             t1 = (1.0 - t) * (1.0 - t);
             t2 = 2.0 * (1.0 - t) * t;
             t3 = t * t;
-            px = (t1 * path.get(seqstart)[0]) + (t2 * cpx) + (t3 * path.get(seqend)[0]);
-            py = (t1 * path.get(seqstart)[1]) + (t2 * cpy) + (t3 * path.get(seqend)[1]);
+            px = (t1 * path.get(seqstart)[0]) + (t2 * cpx)
+                    + (t3 * path.get(seqend)[0]);
+            py = (t1 * path.get(seqstart)[1]) + (t2 * cpy)
+                    + (t3 * path.get(seqend)[1]);
 
-            dist2 = ((path.get(pcnt)[0] - px) * (path.get(pcnt)[0] - px)) + ((path.get(pcnt)[1] - py) * (path.get(pcnt)[1] - py));
+            dist2 = ((path.get(pcnt)[0] - px) * (path.get(pcnt)[0] - px))
+                    + ((path.get(pcnt)[1] - py) * (path.get(pcnt)[1] - py));
 
             if (dist2 > qtreshold) {
                 curvepass = false;
@@ -555,11 +611,12 @@ public class VectorizingUtils {
             return segment;
         }
 
-        // 5.5. If the spline fails (an error>qtreshold), find the point with the biggest error,
-        // set splitpoint = (fitting point + errorpoint)/2
+        // 5.5. If the spline fails (an error>qtreshold), find the point with
+        // the biggest error, set splitpoint = (fitting point + errorpoint)/2
         int splitpoint = (fitpoint + errorpoint) / 2;
 
-        // 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
+        // 5.6. Split sequence and recursively apply 5.2. - 5.6. to
+        // startpoint-splitpoint and splitpoint-endpoint sequences
         segment = fitseq(path, ltreshold, qtreshold, seqstart, splitpoint);
         segment.addAll(fitseq(path, ltreshold, qtreshold, splitpoint, seqend));
         return segment;
