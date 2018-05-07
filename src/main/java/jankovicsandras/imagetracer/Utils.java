@@ -31,10 +31,10 @@ public class Utils {
         byte[][] bytePalette;
         if (old) {
             if (options.isColorSampling()) {
-                bytePalette = Quantize2.samplePalette(options.numberOfColors(),
+                bytePalette = QuantizeOld.samplePalette(options.numberOfColors(),
                         imageData);
             } else {
-                bytePalette = Quantize2.generatePalette(options.numberOfColors());
+                bytePalette = QuantizeOld.generatePalette(options.numberOfColors());
             }
         } else {
             int[][] pixels = new int[image.getWidth()][image.getHeight()];

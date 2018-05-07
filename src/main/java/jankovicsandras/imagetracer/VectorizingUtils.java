@@ -3,8 +3,16 @@ package jankovicsandras.imagetracer;
 import jankovicsandras.imagetracer.ImageTracer.ImageData;
 import jankovicsandras.imagetracer.ImageTracer.IndexedImage;
 
+import java.awt.*;
+import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.QuadCurve2D;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 /**
  * Vectorizing functions
@@ -544,8 +552,7 @@ public class VectorizingUtils {
         if (curvepass) {
             segments.add(Segment.line(
                     path.get(seqstart)[0], path.get(seqstart)[1],
-                    path.get(seqend)[0], path.get(seqend)[1],
-                    0));
+                    path.get(seqend)[0], path.get(seqend)[1]));
             return segments;
         }
 
@@ -596,9 +603,8 @@ public class VectorizingUtils {
         if (curvepass) {
             segments.add(Segment.conic(
                     path.get(seqstart)[0], path.get(seqstart)[1],
-                    cpx, cpy, path.get(seqend)[0],
-                    path.get(seqend)[1],
-                    0));
+                    cpx, cpy,
+                    path.get(seqend)[0], path.get(seqend)[1]));
             return segments;
         }
 
@@ -647,5 +653,90 @@ public class VectorizingUtils {
             btbis.add(batchtracepaths(binternodes.get(k), ltres, qtres));
         }
         return btbis;
+    }
+
+    /**
+     * 6. Take tracing layers and convert them to paths with colors
+     *
+     * @param indexedImage
+     * @param options
+     * @return
+     */
+    public static List<Segment> segments(IndexedImage indexedImage,
+            Options options) {
+        // SVG start
+        int width = (int) (indexedImage.width * options.scale());
+
+        // Creating Z-index
+        // Sorting Z-index is not required, TreeMap is sorted automatically
+        TreeMap<Double, Integer[]> zindex = new TreeMap<>();
+        double label;
+        // Layer loop
+        for (int k = 0; k < indexedImage.traceData.size(); k++) {
+
+            // Path loop
+            for (int pcnt = 0; pcnt < indexedImage.traceData.get(k).size(); pcnt++) {
+                Segment segment = indexedImage.traceData.get(k).get(pcnt).get(0);
+                Point2D start = segment.start();
+                if (start == null) {
+                    continue;
+                }
+
+                // Label (Z-index key) is the startpoint of the path, linearized
+                label = (start.getY() * width) + start.getX();
+                // Creating new list if required
+                if (!zindex.containsKey(label)) {
+                    zindex.put(label, new Integer[2]);
+                }
+                // Adding layer and path number to list
+                zindex.get(label)[0] = new Integer(k);
+                zindex.get(label)[1] = new Integer(pcnt);
+            }
+        }
+
+        // Z-index loop
+        List<Segment> segments = new LinkedList<>();
+        for (Entry<Double, Integer[]> entry : zindex.entrySet()) {
+
+            List<Segment> entrySegments = indexedImage.traceData.get(
+                    entry.getValue()[0]).get(entry.getValue()[1]);
+
+            Path2D path = new Path2D.Double();
+            boolean start = true;
+            for (Segment segment : entrySegments) {
+                if (start) {
+                    Point2D startPoint = segment.start();
+                    if (startPoint != null) {
+                        path.moveTo(startPoint.getX(), startPoint.getY());
+                        start = false;
+                    }
+                } else {
+                    Shape shape = segment.shape();
+                    if (shape instanceof Line2D) {
+                        Line2D line = (Line2D) shape;
+                        path.lineTo(line.getX2(), line.getY2());
+                    } else if (shape instanceof QuadCurve2D) {
+                        QuadCurve2D conic = (QuadCurve2D) shape;
+                        path.quadTo(conic.getCtrlX(), conic.getCtrlY(),
+                                conic.getX2(), conic.getY2());
+                    }
+                }
+            }
+            path.closePath();
+
+            Segment segment = new Segment(path);
+
+            byte[] entryColor = indexedImage.palette[entry.getValue()[0]];
+            Color color = new Color(entryColor[0] + 128, entryColor[1] + 128,
+                    entryColor[2] + 128, entryColor[3] + 128);
+            segment.setColor(color);
+
+            segment.setL(entry.getValue()[0]);
+            segment.setP(entry.getValue()[1]);
+
+            segments.add(segment);
+        }
+
+        return segments;
     }
 }

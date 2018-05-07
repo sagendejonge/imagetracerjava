@@ -5,7 +5,7 @@ import jankovicsandras.imagetracer.ImageTracer.ImageData;
 /**
  * @author sdejonge
  */
-public class Quantize2 {
+public class QuantizeOld {
 
     /**
      * Generating a palette with numberofcolors, array[numberofcolors][4] where

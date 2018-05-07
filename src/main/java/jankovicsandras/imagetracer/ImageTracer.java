@@ -54,7 +54,7 @@ public class ImageTracer {
      */
     public String toSvg() throws Exception {
         IndexedImage ii = trace();
-        return SVGUtils.getSvgString(ii, options);
+        return SVGUtils.getSvgString(trace(), options);
     }
 
     /**
@@ -79,6 +79,8 @@ public class ImageTracer {
         // 5. Batch tracing
         indexedImage.traceData = VectorizingUtils.batchtracelayers(
                 bis, options.ltres(), options.qtres());
+
+        indexedImage.segments = VectorizingUtils.segments(indexedImage, options);
 
         return indexedImage;
     }
@@ -119,6 +121,7 @@ public class ImageTracer {
         // array[palettelength][4] RGBA color palette
         public byte[][] palette;
         public List<List<List<Segment>>> traceData;
+        public List<Segment> segments;
 
         public IndexedImage(int[][] array, byte[][] palette) {
             this.array = array;

@@ -3,132 +3,10 @@ package jankovicsandras.imagetracer;
 import jankovicsandras.imagetracer.ImageTracer.IndexedImage;
 
 import java.awt.*;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.QuadCurve2D;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeMap;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
 
 public class SVGUtils {
-
-    /**
-     * Getting SVG path element string from a traced path
-     *
-     * @param builder
-     * @param desc
-     * @param segments
-     * @param colorStr
-     * @param options
-     */
-    public static void svgPathString(StringBuilder builder, String desc,
-            List<Segment> segments, String colorStr, final Options options) {
-
-        segments.forEach(segment -> segment.scale(options.scale()));
-
-        boolean start = true;
-        for (Segment segment : segments) {
-            if (start) {
-                Point2D startPoint = segment.start();
-                if (startPoint != null) {
-                    // Start path and move to
-                    builder.append("<path ")
-                            .append(desc)
-                            .append(colorStr)
-                            .append("d=\"")
-                            .append("M ")
-                            .append(startPoint.getX())
-                            .append(" ")
-                            .append(startPoint.getY())
-                            .append(" ");
-                    start = false;
-                }
-            } else {
-                Shape shape = segment.shape();
-                if (shape instanceof Line2D) {
-                    Line2D line = (Line2D) shape;
-                    builder.append("L ")
-                            .append(round(line.getX2(), options))
-                            .append(" ")
-                            .append(round(line.getY2(), options))
-                            .append(" ");
-                } else if (shape instanceof QuadCurve2D) {
-                    QuadCurve2D conic = (QuadCurve2D) shape;
-                    builder.append("Q ")
-                            .append(round(conic.getCtrlX(), options))
-                            .append(" ")
-                            .append(round(conic.getCtrlY(), options))
-                            .append(" ")
-                            .append(round(conic.getX2(), options))
-                            .append(" ")
-                            .append(round(conic.getY2(), options))
-                            .append(" ");
-                }
-            }
-        }
-
-        builder.append("Z\" />");
-
-//        // Rendering control points
-//        for (int i = 0; i < segments.size(); i++) {
-//            if ((options.lcpr() > 0) && (segments.get(i)[0] == 1.0)) {
-//                builder.append("<circle cx=\"")
-//                        .append(segments.get(i)[3])
-//                        .append("\" cy=\"")
-//                        .append(segments.get(i)[4])
-//                        .append("\" r=\"")
-//                        .append(options.lcpr())
-//                        .append("\" fill=\"white\" stroke-width=\"")
-//                        .append(options.lcpr() * 0.2)
-//                        .append("\" stroke=\"black\" />");
-//            }
-//            if (options.qcpr() > 0 && segments.get(i)[0] == 2.0) {
-//                builder.append("<circle cx=\"")
-//                        .append(segments.get(i)[3])
-//                        .append("\" cy=\"")
-//                        .append(segments.get(i)[4])
-//                        .append("\" r=\"")
-//                        .append(options.qcpr())
-//                        .append("\" fill=\"cyan\" stroke-width=\"")
-//                        .append(options.qcpr() * 0.2)
-//                        .append("\" stroke=\"black\" />");
-//
-//                builder.append("<circle cx=\"")
-//                        .append(segments.get(i)[5])
-//                        .append("\" cy=\"")
-//                        .append(segments.get(i)[6])
-//                        .append("\" r=\"")
-//                        .append(options.qcpr())
-//                        .append("\" fill=\"white\" stroke-width=\"")
-//                        .append(options.qcpr() * 0.2)
-//                        .append("\" stroke=\"black\" />");
-//
-//                builder.append("<line x1=\"")
-//                        .append(segments.get(i)[1])
-//                        .append("\" y1=\"")
-//                        .append(segments.get(i)[2])
-//                        .append("\" x2=\"")
-//                        .append(segments.get(i)[3])
-//                        .append("\" y2=\"")
-//                        .append(segments.get(i)[4])
-//                        .append("\" stroke-width=\"")
-//                        .append(options.qcpr() * 0.2)
-//                        .append("\" stroke=\"cyan\" />");
-//
-//                builder.append("<line x1=\"")
-//                        .append(segments.get(i)[3])
-//                        .append("\" y1=\"")
-//                        .append(segments.get(i)[4])
-//                        .append("\" x2=\"")
-//                        .append(segments.get(i)[5])
-//                        .append("\" y2=\"")
-//                        .append(segments.get(i)[6])
-//                        .append("\" stroke-width=\"")
-//                        .append(options.qcpr() * 0.2)
-//                        .append("\" stroke=\"cyan\" />");
-//            }
-//        }
-    }
 
     /**
      * Converting tracedata to an SVG string, paths are drawn according to a Z-index
@@ -141,64 +19,186 @@ public class SVGUtils {
     public static String getSvgString(IndexedImage indexedImage,
             Options options) {
         // SVG start
-        int w = (int) (indexedImage.width * options.scale()), h = (int) (indexedImage.height * options.scale());
-        String viewboxorviewport = options.isViewBox() ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
-        StringBuilder svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
+        int width = (int) (indexedImage.width * options.scale());
+        int height = (int) (indexedImage.height * options.scale());
+        String viewboxorviewport = options.isViewBox()
+                ? "viewBox=\"0 0 " + width + " " + height + "\" "
+                : "width=\"" + width + "\" height=\"" + height + "\" ";
+        StringBuilder builder = new StringBuilder("<svg " + viewboxorviewport
+                + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
         if (options.isDesc()) {
-            svgstr.append("desc=\"Created with ImageTracer.java version " + ImageTracer.VersionNumber + "\" ");
+            builder.append("desc=\"Created with ImageTracer.java version "
+                    + ImageTracer.VersionNumber + "\" ");
         }
-        svgstr.append(">");
-
-        // creating Z-index
-        TreeMap<Double, Integer[]> zindex = new TreeMap<>();
-        double label;
-        // Layer loop
-        for (int k = 0; k < indexedImage.traceData.size(); k++) {
-
-            // Path loop
-            for (int pcnt = 0; pcnt < indexedImage.traceData.get(k).size(); pcnt++) {
-                Segment segment = indexedImage.traceData.get(k).get(pcnt).get(0);
-                Point2D start = segment.start();
-                if (start == null) {
-                    continue;
-                }
-
-                // Label (Z-index key) is the startpoint of the path, linearized
-                label = (start.getY() * w) + start.getX();
-                // Creating new list if required
-                if (!zindex.containsKey(label)) {
-                    zindex.put(label, new Integer[2]);
-                }
-                // Adding layer and path number to list
-                zindex.get(label)[0] = new Integer(k);
-                zindex.get(label)[1] = new Integer(pcnt);
-            }
-        }
-
-        // Sorting Z-index is not required, TreeMap is sorted automatically
+        builder.append(">");
 
         // Drawing
-        // Z-index loop
-        String thisdesc = "";
-        for (Entry<Double, Integer[]> entry : zindex.entrySet()) {
-            if (options.isDesc()) {
-                thisdesc = "desc=\"l " + entry.getValue()[0] + " p " + entry.getValue()[1] + "\" ";
-            } else {
-                thisdesc = "";
-            }
-            svgPathString(svgstr, thisdesc,
-                    indexedImage.traceData.get(entry.getValue()[0]).get(entry.getValue()[1]),
-                    toSvgColorStr(indexedImage.palette[entry.getValue()[0]]),
-                    options);
-        }
+        indexedImage.segments.forEach(segment
+                -> svgPathString(builder, segment, options));
 
         // SVG End
-        svgstr.append("</svg>");
+        builder.append("</svg>");
 
-        return svgstr.toString();
+        return builder.toString();
     }
 
-    public static double round(double value, Options options) {
+    /**
+     * Getting SVG path element string from a traced path
+     *
+     * @param builder
+     * @param segment
+     * @param options
+     */
+    private static void svgPathString(StringBuilder builder, Segment segment,
+            Options options) {
+
+        String desc = "";
+        if (options.isDesc()) {
+            desc = "desc=\"l " + segment.l() + " p " + segment.p() + "\" ";
+        }
+
+        String colorStr = toSvgColor(segment.color());
+
+        // Start path and move to
+        builder.append("<path ")
+                .append(desc)
+                .append(colorStr)
+                .append("d=\"");
+
+        segment.scale(options.scale());
+
+        Shape shape = segment.shape();
+        if (shape instanceof Path2D) {
+            Path2D path = (Path2D) shape;
+            PathIterator iterator = path.getPathIterator(null);
+            double values[] = new double[6];
+            double prevX = 0;
+            double prevY = 0;
+            while (!iterator.isDone()) {
+                int type = iterator.currentSegment(values);
+                switch (type) {
+                    case PathIterator.SEG_MOVETO:
+                        builder.append("M ")
+                                .append(round(values[0], options))
+                                .append(" ")
+                                .append(round(values[1], options))
+                                .append(" ");
+                        prevX = values[0];
+                        prevY = values[1];
+                        break;
+                    case PathIterator.SEG_LINETO:
+                        builder.append("L ")
+                                .append(round(values[0], options))
+                                .append(" ")
+                                .append(round(values[1], options))
+                                .append(" ");
+                        prevX = values[0];
+                        prevY = values[1];
+                        break;
+                    case PathIterator.SEG_QUADTO:
+                        builder.append("Q ")
+                                .append(round(values[0], options))
+                                .append(" ")
+                                .append(round(values[1], options))
+                                .append(" ")
+                                .append(round(values[2], options))
+                                .append(" ")
+                                .append(round(values[3], options))
+                                .append(" ");
+                        prevX = values[2];
+                        prevY = values[3];
+                        break;
+                    case PathIterator.SEG_CUBICTO:
+                        builder.append("C ")
+                                .append(round(values[0], options))
+                                .append(" ")
+                                .append(round(values[1], options))
+                                .append(" ")
+                                .append(round(values[2], options))
+                                .append(" ")
+                                .append(round(values[3], options))
+                                .append(" ")
+                                .append(round(values[4], options))
+                                .append(" ")
+                                .append(round(values[5], options))
+                                .append(" ");
+                        prevX = values[4];
+                        prevY = values[5];
+                        break;
+                    case PathIterator.SEG_CLOSE:
+                        builder.append("Z\"");
+                        break;
+                }
+                renderCtrlPts(builder, type, prevX, prevY, values, options);
+                iterator.next();
+            }
+        }
+
+        builder.append(" />");
+
+    }
+
+    private static void renderCtrlPts(StringBuilder builder, int type,
+            double prevX, double prevY, double[] values, Options options) {
+        if ((options.lcpr() > 0) && (type == PathIterator.SEG_LINETO)) {
+            builder.append("<circle cx=\"")
+                    .append(values[0])
+                    .append("\" cy=\"")
+                    .append(values[1])
+                    .append("\" r=\"")
+                    .append(options.lcpr())
+                    .append("\" fill=\"white\" stroke-width=\"")
+                    .append(options.lcpr() * 0.2)
+                    .append("\" stroke=\"black\" />");
+        }
+        if (options.qcpr() > 0 && (type == PathIterator.SEG_QUADTO)) {
+            builder.append("<circle cx=\"")
+                    .append(values[0])
+                    .append("\" cy=\"")
+                    .append(values[1])
+                    .append("\" r=\"")
+                    .append(options.qcpr())
+                    .append("\" fill=\"cyan\" stroke-width=\"")
+                    .append(options.qcpr() * 0.2)
+                    .append("\" stroke=\"black\" />");
+
+            builder.append("<circle cx=\"")
+                    .append(values[2])
+                    .append("\" cy=\"")
+                    .append(values[3])
+                    .append("\" r=\"")
+                    .append(options.qcpr())
+                    .append("\" fill=\"white\" stroke-width=\"")
+                    .append(options.qcpr() * 0.2)
+                    .append("\" stroke=\"black\" />");
+
+            builder.append("<line x1=\"")
+                    .append(prevX)
+                    .append("\" y1=\"")
+                    .append(prevY)
+                    .append("\" x2=\"")
+                    .append(values[0])
+                    .append("\" y2=\"")
+                    .append(values[1])
+                    .append("\" stroke-width=\"")
+                    .append(options.qcpr() * 0.2)
+                    .append("\" stroke=\"cyan\" />");
+
+            builder.append("<line x1=\"")
+                    .append(values[0])
+                    .append("\" y1=\"")
+                    .append(values[1])
+                    .append("\" x2=\"")
+                    .append(values[2])
+                    .append("\" y2=\"")
+                    .append(values[3])
+                    .append("\" stroke-width=\"")
+                    .append(options.qcpr() * 0.2)
+                    .append("\" stroke=\"cyan\" />");
+        }
+    }
+
+    private static double round(double value, Options options) {
         if (options.roundCoords() == -1) {
             return value;
         }
@@ -206,11 +206,11 @@ public class SVGUtils {
                 / Math.pow(10, options.roundCoords());
     }
 
-    static String toSvgColorStr(byte[] c) {
+    private static String toSvgColor(Color color) {
         return String.format("fill=\"rgb(%s,%s,%s)\" stroke=\"rgb(%s,%s,%s)\" " +
                         "stroke-width=\"1\" opacity=\"%s\" ",
-                c[0] + 128, c[1] + 128, c[2] + 128,
-                c[0] + 128, c[1] + 128, c[2] + 128,
-                (c[3] + 128) / 255.0);
+                color.getRed(), color.getGreen(), color.getBlue(),
+                color.getRed(), color.getGreen(), color.getBlue(),
+                color.getAlpha() / 255.0);
     }
 }
