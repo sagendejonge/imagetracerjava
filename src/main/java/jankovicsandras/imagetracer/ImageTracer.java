@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ImageTracer {
 
-    public static final String VersionNumber = "1.1.3";
+    public static final String VersionNumber = "1.1.4";
     private Options options;
     private BufferedImage image;
     private byte[][] palette;
